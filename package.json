@@ -1,6 +1,6 @@
 {
   "name": "@umm/command_runner",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI command runner",
   "homepage": "https://github.com/umm-projects/command_runner",
   "bugs": {
