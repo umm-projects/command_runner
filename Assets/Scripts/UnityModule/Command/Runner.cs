@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using UniRx;
 
@@ -6,21 +8,23 @@ namespace UnityModule.Command {
 
     public static class Runner<TResult> where TResult : class {
 
+        private const double DEFAULT_TIMEOUT_SECONDS = 30.0;
+
         public static TResult Run(string command, string subCommand, List<string> argumentMap = null) {
-            if (typeof(TResult).IsGenericType && typeof(IObservable<>).IsAssignableFrom(typeof(TResult).GetGenericTypeDefinition())) {
+            if (typeof(TResult).IsGenericType && typeof(UniRx.IObservable<>).IsAssignableFrom(typeof(TResult).GetGenericTypeDefinition())) {
                 return RunCommandAsync(command, subCommand, argumentMap) as TResult;
             }
             return RunCommand(command, subCommand, argumentMap) as TResult;
         }
 
-        private static IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null) {
+        private static UniRx.IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null) {
             return Observable
                 .Create<string>(
                     (observer) => {
                         try {
                             observer.OnNext(RunCommand(command, subCommand, argumentMap));
                             observer.OnCompleted();
-                        } catch (System.Exception e) {
+                        } catch (Exception e) {
                             observer.OnError(e);
                         }
                         return null;
@@ -28,31 +32,52 @@ namespace UnityModule.Command {
                 );
         }
 
-        private static string RunCommand(string command, string subCommand, List<string> argumentMap = null) {
-            string output;
-            System.Diagnostics.Process process = CreateProcess(command, subCommand, argumentMap);
-            process.Start();
-            process.WaitForExit();
-            if (process.ExitCode == 0) {
-                output = process.StandardOutput.ReadToEnd();
-                process.Close();
-            } else {
-                process.Close();
-                throw new System.InvalidOperationException(process.StandardError.ReadToEnd());
+        private static string RunCommand(string command, string subCommand, List<string> argumentMap = null, double timeoutSeconds = DEFAULT_TIMEOUT_SECONDS) {
+            var stdout = new StringBuilder();
+            var stderr = new StringBuilder();
+            using (var process = new Process()) {
+                process.StartInfo = CreateProcessStartInfo(command, subCommand, argumentMap);
+                process.OutputDataReceived += (sender, e) => {
+                    if (e.Data != null) {
+                        stdout.AppendLine(e.Data);
+                    }
+                };
+                process.ErrorDataReceived += (sender, e) => {
+                    if (e.Data != null) {
+                        stderr.AppendLine(e.Data);
+                    }
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                bool timeouted = false;
+                if (!process.WaitForExit((int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds)) {
+                    timeouted = true;
+                    process.Kill();
+                }
+
+                process.CancelOutputRead();
+                process.CancelErrorRead();
+
+                if (timeouted) {
+                    throw new TimeoutException();
+                }
+                if (process.ExitCode != 0) {
+                    throw new InvalidOperationException(stderr.ToString());
+                }
             }
-            return output;
+            return stdout.ToString();
         }
 
-        private static System.Diagnostics.Process CreateProcess(string command, string subCommand, List<string> argumentMap = null) {
-            return new System.Diagnostics.Process {
-                StartInfo = {
-                    FileName = command,
-                    Arguments = string.Format("{0}{1}", subCommand, CreateArgument(argumentMap)),
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                },
+        private static ProcessStartInfo CreateProcessStartInfo(string command, string subCommand, List<string> argumentMap = null) {
+            return new ProcessStartInfo() {
+                FileName = command,
+                Arguments = string.Format("{0}{1}", subCommand, CreateArgument(argumentMap)),
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
             };
         }
 
