@@ -11,13 +11,13 @@ namespace UnityModule.Command {
         private const double DEFAULT_TIMEOUT_SECONDS = 30.0;
 
         public static TResult Run(string command, string subCommand, List<string> argumentMap = null) {
-            if (typeof(TResult).IsGenericType && typeof(UniRx.IObservable<>).IsAssignableFrom(typeof(TResult).GetGenericTypeDefinition())) {
+            if (typeof(TResult).IsGenericType && typeof(IObservable<>).IsAssignableFrom(typeof(TResult).GetGenericTypeDefinition())) {
                 return RunCommandAsync(command, subCommand, argumentMap) as TResult;
             }
             return RunCommand(command, subCommand, argumentMap) as TResult;
         }
 
-        private static UniRx.IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null) {
+        private static IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null) {
             return Observable
                 .Create<string>(
                     (observer) => {
