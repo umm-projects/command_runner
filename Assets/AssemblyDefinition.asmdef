@@ -1,0 +1,10 @@
+{
+  "name": "umm@command_runner",
+  "references": [
+    "umm@unirx"
+  ],
+  "optionalUnityReferences": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false
+}
