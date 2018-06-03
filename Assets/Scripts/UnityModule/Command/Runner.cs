@@ -94,7 +94,7 @@ namespace UnityModule.Command {
 
     }
 
-    internal class SafeList<T> : List<T> {
+    public class SafeList<T> : List<T> {
 
         public SafeList(List<T> original) {
             if (original != default(List<T>)) {
@@ -104,9 +104,9 @@ namespace UnityModule.Command {
 
     }
 
-    internal static class Extension {
+    public static class Extension {
 
-        internal static string Combine(this IEnumerable<string> items, bool surroundDoubleQuatation = true) {
+        public static string Combine(this IEnumerable<string> items, bool surroundDoubleQuatation = true) {
             StringBuilder sb = new StringBuilder();
             foreach (string item in items) {
                 sb.AppendFormat(
@@ -118,7 +118,7 @@ namespace UnityModule.Command {
             return sb.ToString();
         }
 
-        internal static string Quot(this string original) {
+        public static string Quot(this string original) {
             return string.Format("{1}{0}{1}", original, "\"");
         }
 
