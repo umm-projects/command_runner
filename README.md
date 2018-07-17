@@ -9,7 +9,7 @@
 ## Install
 
 ```shell
-yarn add github:umm-projects/command_runner
+yarn add github:umm/command_runner
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ public class Sample {
 }
 ```
 
-* `Runner` クラスの型引数に `UniRx.IObservable<T>` を指定すると [UniRx](https://github.com/umm-projects/unirx) による非同期処理を行います
+* `Runner` クラスの型引数に `UniRx.IObservable<T>` を指定すると [UniRx](https://github.com/umm/unirx) による非同期処理を行います
 
 ## License
 

@@ -2,9 +2,9 @@
   "name": "@umm/command_runner",
   "version": "1.2.1",
   "description": "CLI command runner",
-  "homepage": "https://github.com/umm-projects/command_runner",
+  "homepage": "https://github.com/umm/command_runner",
   "bugs": {
-    "url": "https://github.com/umm-projects/command_runner/issues"
+    "url": "https://github.com/umm/command_runner/issues"
   },
   "scripts": {
     "umm:init": "umm-init",
@@ -18,15 +18,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:umm-projects/command_runner"
+    "url": "git@github.com:umm/command_runner"
   },
   "files": [
     "Assets",
     "scripts"
   ],
   "dependencies": {
-    "@umm/scripts": "umm-projects/scripts#^1.0.0",
-    "@umm/unirx": "umm-projects/unirx#^2.0.0"
+    "@umm/scripts": "umm/scripts#^1.0.0",
+    "@umm/unirx": "umm/unirx#^2.0.0"
   },
   "devDependencies": {}
 }
