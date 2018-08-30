@@ -57,6 +57,13 @@ namespace UnityModule.Command {
                     process.Kill();
                 }
 
+                // 結果を受け取れないコトがあるので、タイムアウトしていない場合は再度待つ
+                //   See also: https://social.msdn.microsoft.com/Forums/netframework/ja-JP/04b43b9f-991c-4c1c-a507-414373e01e30/process-?forum=netfxgeneralja
+                if (!timeouted)
+                {
+                    process.WaitForExit();
+                }
+
                 process.CancelOutputRead();
                 process.CancelErrorRead();
 
