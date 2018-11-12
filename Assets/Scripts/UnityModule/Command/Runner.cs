@@ -32,24 +32,12 @@ namespace UnityModule.Command {
                 );
         }
 
-        private static string RunCommand(string command, string subCommand, List<string> argumentMap = null, double timeoutSeconds = DEFAULT_TIMEOUT_SECONDS) {
-            var stdout = new StringBuilder();
-            var stderr = new StringBuilder();
+        private static string RunCommand(string command, string subCommand, List<string> argumentMap = null, double timeoutSeconds = DEFAULT_TIMEOUT_SECONDS)
+        {
+            string result;
             using (var process = new Process()) {
                 process.StartInfo = CreateProcessStartInfo(command, subCommand, argumentMap);
-                process.OutputDataReceived += (sender, e) => {
-                    if (e.Data != null) {
-                        stdout.AppendLine(e.Data);
-                    }
-                };
-                process.ErrorDataReceived += (sender, e) => {
-                    if (e.Data != null) {
-                        stderr.AppendLine(e.Data);
-                    }
-                };
                 process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
 
                 bool timeouted = false;
                 if (!process.WaitForExit((int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds)) {
@@ -57,24 +45,16 @@ namespace UnityModule.Command {
                     process.Kill();
                 }
 
-                // 結果を受け取れないコトがあるので、タイムアウトしていない場合は再度待つ
-                //   See also: https://social.msdn.microsoft.com/Forums/netframework/ja-JP/04b43b9f-991c-4c1c-a507-414373e01e30/process-?forum=netfxgeneralja
-                if (!timeouted)
-                {
-                    process.WaitForExit();
-                }
-
-                process.CancelOutputRead();
-                process.CancelErrorRead();
-
                 if (timeouted) {
                     throw new TimeoutException();
                 }
                 if (process.ExitCode != 0) {
-                    throw new InvalidOperationException(stderr.ToString());
+                    throw new InvalidOperationException(process.StandardError.ReadToEnd());
                 }
+
+                result = process.StandardOutput.ReadToEnd();
             }
-            return stdout.ToString();
+            return result;
         }
 
         private static ProcessStartInfo CreateProcessStartInfo(string command, string subCommand, List<string> argumentMap = null) {
