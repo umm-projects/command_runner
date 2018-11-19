@@ -10,17 +10,17 @@ namespace UnityModule.Command
     {
         public const double DefaultTimeoutSeconds = 30.0;
 
-        public static TResult Run(string command, string subCommand, List<string> argumentMap = null)
+        public static TResult Run(string command, string subCommand, List<string> argumentMap = null, double timeout = DefaultTimeoutSeconds)
         {
             if (typeof(TResult).IsGenericType && typeof(IObservable<>).IsAssignableFrom(typeof(TResult).GetGenericTypeDefinition()))
             {
-                return RunCommandAsync(command, subCommand, argumentMap) as TResult;
+                return RunCommandAsync(command, subCommand, argumentMap, timeout) as TResult;
             }
 
-            return RunCommand(command, subCommand, argumentMap) as TResult;
+            return RunCommand(command, subCommand, argumentMap, timeout) as TResult;
         }
 
-        private static IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null)
+        private static IObservable<string> RunCommandAsync(string command, string subCommand, List<string> argumentMap = null, double timeout = DefaultTimeoutSeconds)
         {
             return Observable
                 .Create<string>(
@@ -28,7 +28,7 @@ namespace UnityModule.Command
                     {
                         try
                         {
-                            observer.OnNext(RunCommand(command, subCommand, argumentMap));
+                            observer.OnNext(RunCommand(command, subCommand, argumentMap, timeout));
                             observer.OnCompleted();
                         }
                         catch (Exception e)
