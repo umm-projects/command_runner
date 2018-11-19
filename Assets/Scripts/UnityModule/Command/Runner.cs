@@ -8,7 +8,7 @@ namespace UnityModule.Command
 {
     public static class Runner<TResult> where TResult : class
     {
-        private const double DefaultTimeoutSeconds = 30.0;
+        public const double DefaultTimeoutSeconds = 30.0;
 
         public static TResult Run(string command, string subCommand, List<string> argumentMap = null)
         {
