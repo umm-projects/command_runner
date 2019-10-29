@@ -43,11 +43,32 @@ namespace UnityModule.Command
 
         private static string RunCommand(string command, string subCommand, List<string> argumentMap = null, double timeoutSeconds = DefaultTimeoutSeconds)
         {
-            string result;
+            var output = new StringBuilder();
+
             using (var process = new Process())
             {
                 process.StartInfo = CreateProcessStartInfo(command, subCommand, argumentMap);
                 process.Start();
+
+                var stdout = new StringBuilder();
+                var stderr = new StringBuilder();
+
+                process.OutputDataReceived += (sender, eventArgs) =>
+                {
+                    if (eventArgs.Data != null)
+                    {
+                        stdout.AppendLine(eventArgs.Data);
+                    }
+                };
+                process.ErrorDataReceived += (sender, eventArgs) =>
+                {
+                    if (eventArgs.Data != null)
+                    {
+                        stderr.AppendLine(eventArgs.Data);
+                    }
+                };
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
 
                 var timeouted = false;
                 if (!process.WaitForExit((int) TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds))
@@ -55,6 +76,12 @@ namespace UnityModule.Command
                     timeouted = true;
                     process.Kill();
                 }
+
+                process.CancelOutputRead();
+                process.CancelErrorRead();
+
+                output.AppendLine(stdout.ToString());
+                output.AppendLine(stderr.ToString());
 
                 if (timeouted)
                 {
@@ -65,11 +92,9 @@ namespace UnityModule.Command
                 {
                     throw new InvalidOperationException(process.StandardError.ReadToEnd());
                 }
-
-                result = process.StandardOutput.ReadToEnd();
             }
 
-            return result;
+            return output.ToString();
         }
 
         private static ProcessStartInfo CreateProcessStartInfo(string command, string subCommand, List<string> argumentMap = null)
