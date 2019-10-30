@@ -43,15 +43,13 @@ namespace UnityModule.Command
 
         private static string RunCommand(string command, string subCommand, List<string> argumentMap = null, double timeoutSeconds = DefaultTimeoutSeconds)
         {
-            var output = new StringBuilder();
+            var stdout = new StringBuilder();
+            var stderr = new StringBuilder();
 
             using (var process = new Process())
             {
                 process.StartInfo = CreateProcessStartInfo(command, subCommand, argumentMap);
                 process.Start();
-
-                var stdout = new StringBuilder();
-                var stderr = new StringBuilder();
 
                 process.OutputDataReceived += (sender, eventArgs) =>
                 {
@@ -80,9 +78,6 @@ namespace UnityModule.Command
                 process.CancelOutputRead();
                 process.CancelErrorRead();
 
-                output.AppendLine(stdout.ToString());
-                output.AppendLine(stderr.ToString());
-
                 if (timeouted)
                 {
                     throw new TimeoutException();
@@ -90,11 +85,11 @@ namespace UnityModule.Command
 
                 if (process.ExitCode != 0)
                 {
-                    throw new InvalidOperationException(process.StandardError.ReadToEnd());
+                    throw new InvalidOperationException(stderr.ToString());
                 }
             }
 
-            return output.ToString();
+            return stdout.ToString();
         }
 
         private static ProcessStartInfo CreateProcessStartInfo(string command, string subCommand, List<string> argumentMap = null)
