@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using UniRx;
 
 namespace UnityModule.Command
@@ -47,15 +48,20 @@ namespace UnityModule.Command
             var stderr = new StringBuilder();
 
             using (var process = new Process())
+            using (var cancellationToken = new CancellationTokenSource())
             {
                 process.StartInfo = CreateProcessStartInfo(command, subCommand, argumentMap);
-                process.Start();
 
                 process.OutputDataReceived += (sender, eventArgs) =>
                 {
                     if (eventArgs.Data != null)
                     {
                         stdout.AppendLine(eventArgs.Data);
+                    }
+                    else
+                    {
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.datareceivedeventhandler?view=netframework-4.8
+                        cancellationToken.Cancel();
                     }
                 };
                 process.ErrorDataReceived += (sender, eventArgs) =>
@@ -64,21 +70,25 @@ namespace UnityModule.Command
                     {
                         stderr.AppendLine(eventArgs.Data);
                     }
+                    else
+                    {
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.datareceivedeventhandler?view=netframework-4.8
+                        cancellationToken.Cancel();
+                    }
                 };
+
+                process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                var timeouted = false;
-                if (!process.WaitForExit((int) TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds))
-                {
-                    timeouted = true;
-                    process.Kill();
-                }
+                var isTimeout =
+                    !cancellationToken.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(timeoutSeconds));
+                process.WaitForExit();
 
                 process.CancelOutputRead();
                 process.CancelErrorRead();
 
-                if (timeouted)
+                if (isTimeout)
                 {
                     throw new TimeoutException();
                 }
